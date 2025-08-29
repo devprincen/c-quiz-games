@@ -1,14 +1,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "cJSON.h"
+#include "json_io.h"
+#include "cJSON.c"
+#include "json_io.c"
 
-char username[30], password[10];
+void registerPage();
+void loginPage();
+void mainMenu();
+void playGame(int level); 
+void viewRules();
+void viewHighScore();
+void startQuiz();
+     
+char username[30], password[10], email[50];
 
-int main()
-{
+int main() {
     int choice;
     char temp;
-
+    
     while (1)
     {
         printf(" WELCOME \n");
@@ -36,25 +47,46 @@ int main()
             printf("Invalid choice! Please try again.\n");
         }
 
-        printf("Press any key and Enter to go back to Main Menu");
+        printf("Press any key and Enter to go back to Main Menu:- ");
         scanf(" %c", &temp);
     }
 
     return 0;
 }
 
-void registerPage()
-{
+
+void registerPage() {
+
     printf("Register Page\n");
     printf("Enter new username: ");
     scanf("%s", username);
     printf("Enter new password: ");
     scanf("%s", password);
-    printf("Registration successful for %s!\n", username);
+    printf("Enter Email: ");
+    scanf("%s", email);
+
+    cJSON *root = (cJSON_CreateObject());
+    cJSON_AddStringToObject(root, "username", username);
+    cJSON_AddStringToObject(root, "password", password);
+    cJSON_AddStringToObject(root, "email", email);
+    if(json_save("user.json", root) != 0){
+        printf("Registration successful for %s!\n", username);
+    } else{
+        printf("Failed to save user!\n");
+    }
+     cJSON_Delete(root);
+
+    cJSON *loaded = json_load("user.json");
+    if(!loaded){
+        printf("Load failed\n");
+    } else{
+        printf("Load succesfully\n"); 
+        cJSON_Delete(loaded);
+    }
+  
 }
 
-void loginPage()
-{
+void loginPage() {
     char inputUser[30], inputPass[10];
     printf(" Login Page\n");
     printf("Enter username: ");
@@ -62,18 +94,29 @@ void loginPage()
     printf("Enter password: ");
     scanf("%s", inputPass);
 
-    if (strcmp(username, inputUser) == 0 && strcmp(password, inputPass) == 0)
-    {
-        printf("Login successful! Welcome %s.\n", inputUser);
+    cJSON *root = json_load("user.json");
+    if(!root){
+        printf("Faild to loaded user.json\n");
+        return;
     }
-    else
-    {
-        printf("Login failed! Username or password incorrect.\n");
+
+    cJSON *username = cJSON_GetObjectItemCaseSensitive(root, "username");
+    cJSON *pass = cJSON_GetObjectItemCaseSensitive(root, "password");
+
+    if(cJSON_IsString(username) && cJSON_IsString(pass)){
+        if(strcmp(username->valuestring, inputUser) == 0 && strcmp(pass->valuestring, inputPass) == 0){
+            printf("Login successful! Welcome %s\n", inputUser);
+            mainMenu();
+        } else{
+            printf("Login faild!\n");
+        }
+    } else{
+        printf("Error: Invalid data format in user.json\n");
     }
+    cJSON_Delete(root);
 }
 
-void mainMenu()
-{
+void mainMenu() {
     int choice;
     while (1)
     {
@@ -88,8 +131,7 @@ void mainMenu()
         printf("Enter your choice: ");
         scanf("%d", &choice);
 
-        switch (choice)
-        {
+        switch (choice) {
         case 1:
             startQuiz();
             break;
