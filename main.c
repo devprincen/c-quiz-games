@@ -47,7 +47,7 @@ int main() {
             printf("Invalid choice! Please try again.\n");
         }
 
-        printf("Press any key and Enter to go back to Main Menu: --");
+        printf("Press any key and Enter to go back to Main Menu:- ");
         scanf(" %c", &temp);
     }
 
@@ -66,9 +66,9 @@ void registerPage() {
     scanf("%s", email);
 
     cJSON *root = (cJSON_CreateObject());
-    cJSON_AddStringToObject(root, "Name", username);
-    cJSON_AddStringToObject(root, "Password", password);
-    cJSON_AddStringToObject(root, "Email", email);
+    cJSON_AddStringToObject(root, "username", username);
+    cJSON_AddStringToObject(root, "password", password);
+    cJSON_AddStringToObject(root, "email", email);
     if(json_save("user.json", root) != 0){
         printf("Registration successful for %s!\n", username);
     } else{
@@ -86,8 +86,7 @@ void registerPage() {
   
 }
 
-void loginPage()
-{
+void loginPage() {
     char inputUser[30], inputPass[10];
     printf(" Login Page\n");
     printf("Enter username: ");
@@ -95,15 +94,26 @@ void loginPage()
     printf("Enter password: ");
     scanf("%s", inputPass);
 
-    if (strcmp(username, inputUser) == 0 && strcmp(password, inputPass) == 0)
-    {
-        printf("Login successful! Welcome %s\n", inputUser);
-        mainMenu();
+    cJSON *root = json_load("user.json");
+    if(!root){
+        printf("Faild to loaded user.json\n");
+        return;
     }
-    else
-    {
-        printf("Login failed! Username or password incorrect.\n");
+
+    cJSON *username = cJSON_GetObjectItemCaseSensitive(root, "username");
+    cJSON *pass = cJSON_GetObjectItemCaseSensitive(root, "password");
+
+    if(cJSON_IsString(username) && cJSON_IsString(pass)){
+        if(strcmp(username->valuestring, inputUser) == 0 && strcmp(pass->valuestring, inputPass) == 0){
+            printf("Login successful! Welcome %s\n", inputUser);
+            mainMenu();
+        } else{
+            printf("Login faild!\n");
+        }
+    } else{
+        printf("Error: Invalid data format in user.json\n");
     }
+    cJSON_Delete(root);
 }
 
 void mainMenu() {
